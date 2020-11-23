@@ -239,7 +239,7 @@ class SEIR_bis():
             """
             ================================================
             Fitting in two steps:
-            ================================================            
+            ================================================
             """
             # Initial values of parameters for the first step:
             init_prm = (self.beta, self.sigma, self.gamma, self.hp)
