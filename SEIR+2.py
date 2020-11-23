@@ -11,7 +11,7 @@ from smoothing import dataframe_smoothing
 
 
 
-class SEIR():
+class SEIR_bis():
 
     def __init__(self):
 
@@ -48,10 +48,10 @@ class SEIR():
         # ========================================== #
 
         # Importance given to each curve during the fitting process
-        self.w_1 = 0.7          # Weight of cumulative positive data
-        self.w_2 = 0.3          # Weight of positive data
-        self.w_3 = 0.7          # Weight of hopit data
-        self.w_4 = 0.3          # Weight of cumul hospit data
+        self.w_1 = 1 / 2          # Weight of cumulative positive data
+        self.w_2 = 1 / 2          # Weight of positive data
+        self.w_3 = 1          # Weight of hopit data
+        self.w_4 = 1          # Weight of cumul hospit data
         self.w_5 = 1            # Weight àf critical data
         self.w_6 = 1            # Weight of fatalities data
 
@@ -59,18 +59,18 @@ class SEIR():
         self.overflow = - 1000
 
         # Smoothing data or not
-        self.smoothing = False
+        self.smoothing = True
 
         # Binomial smoother: ex: if = 2: predicted value *= 2 and p /= 2 WARNING: only use integer
-        self.b_s_1 = 6
+        self.b_s_1 = 2
         self.b_s_2 = 2
-        self.b_s_3 = 6
+        self.b_s_3 = 2
         self.b_s_4 = 2
-        self.b_s_5 = 4
-        self.b_s_6 = 4
+        self.b_s_5 = 2
+        self.b_s_6 = 2
 
         # Optimizer step size
-        self.opti_step = 0.05
+        self.opti_step = 0.1
 
         # Optimizer constraints
         self.beta_min = 0.1
@@ -99,14 +99,30 @@ class SEIR():
         self.LBFGSB = False
         self.auto = False
 
+        # Fit type:
+        self.fit_type = 'type_2'
+
     def get_parameters(self):
 
         prm = (self.beta, self.sigma, self.gamma, self.hp, self.hcr, self.pc, self.pd, self.pcr, self.s, self.t)
         return prm
 
-    def get_initial_state(self):
+    def get_optimizer_parameters(self):
 
-        I_0 = self.dataset[0][1]
+        prm = (self.beta, self.sigma, self.gamma, self.hp, self.hcr, self.pc, self.pd, self.pcr)
+
+    def get_initial_state(self, sensib=None, test_rate=None):
+
+        if sensib is None:
+            s = self.s
+        else:
+            s = sensib
+        if test_rate is None:
+            t = self.t
+        else:
+            t = test_rate
+
+        I_0 = np.round(np.round(self.dataset[0][1] / (s * t)))
         H_0 = self.dataset[0][3]
         E_0 = I_0
         D_0 = 0
@@ -118,7 +134,7 @@ class SEIR():
         init = (S_0, E_0, I_0, R_0, H_0, C_0, D_0, CT_0, CH_0)
         return init
 
-    def differential(self, state, time, beta, sigma, gamma, hp, hcr, pc, pd, pcr, s, t):
+    def differential(self, state, time, beta, sigma, gamma, hp, hcr, pc, pd, pcr):
 
         S, E, I, R, H, C, D, CT, CH = state
 
@@ -142,7 +158,7 @@ class SEIR():
         # Parameters to use
         prm = parameters
         if prm is None:
-            prm = self.get_parameters()
+            prm = self.get_optimizer_parameters()
         # Initial state to use:
         init = initial_state
         if init is None:
@@ -157,73 +173,124 @@ class SEIR():
 
     def fit(self):
 
-        # Initial values of parameters:
-        init_prm = (self.beta, self.sigma, self.gamma, self.hp, self.hcr, self.pc, self.pd, self.pcr, self.s, self.t)
-        # Initial state:
-        init_state = self.get_initial_state()
-        # Time vector:
-        time = self.dataset[:, 0]
-        # Bounds
-        bds = [(self.beta_min, self.beta_max), (self.sigma_min, self.sigma_max), (self.gamma_min, self.gamma_max),
-               (self.hp_min, self.hp_max), (self.hcr_min, self.hcr_max), (self.pc_min, self.pc_max),
-               (self.pd_min, self.pd_max), (self.pcr_min, self.pcr_max), (self.s_min, self.s_max),
-               (self.t_min, self.t_max)]
-        # Constraint on parameters:
-        cons = ({'type': 'ineq', 'fun': lambda x: -x[0] + self.beta_max},
-                {'type': 'ineq', 'fun': lambda x: -x[1] + self.sigma_max},
-                {'type': 'ineq', 'fun': lambda x: -x[2] + self.gamma_max},
-                {'type': 'ineq', 'fun': lambda x: -x[3] + self.hp_max},
-                {'type': 'ineq', 'fun': lambda x: -x[4] + self.hcr_max},
-                {'type': 'ineq', 'fun': lambda x: -x[5] + self.pc_max},
-                {'type': 'ineq', 'fun': lambda x: -x[6] + self.pd_max},
-                {'type': 'ineq', 'fun': lambda x: -x[7] + self.pcr_max},
-                {'type': 'ineq', 'fun': lambda x: -x[8] + self.s_max},
-                {'type': 'ineq', 'fun': lambda x: -x[9] + self.t_max},
-                {'type': 'ineq', 'fun': lambda x: x[0] - self.beta_min},
-                {'type': 'ineq', 'fun': lambda x: x[1] - self.sigma_min},
-                {'type': 'ineq', 'fun': lambda x: x[2] - self.gamma_min},
-                {'type': 'ineq', 'fun': lambda x: x[3] - self.hp_min},
-                {'type': 'ineq', 'fun': lambda x: x[4] - self.hcr_min},
-                {'type': 'ineq', 'fun': lambda x: x[5] - self.pc_min},
-                {'type': 'ineq', 'fun': lambda x: x[6] - self.pd_min},
-                {'type': 'ineq', 'fun': lambda x: x[7] - self.pcr_min},
-                {'type': 'ineq', 'fun': lambda x: x[8] - self.s_min},
-                {'type': 'ineq', 'fun': lambda x: x[9] - self.t_min})
+        if self.fit_type == 'type_1':
+            # Initial values of parameters:
+            init_prm = (self.beta, self.sigma, self.gamma, self.hp, self.hcr, self.pc, self.pd, self.pcr)
+            # Initial state:
+            init_state = self.get_initial_state()
+            # Time vector:
+            time = self.dataset[:, 0]
+            # Bounds
+            bds = [(self.beta_min, self.beta_max), (self.sigma_min, self.sigma_max), (self.gamma_min, self.gamma_max),
+                   (self.hp_min, self.hp_max), (self.hcr_min, self.hcr_max), (self.pc_min, self.pc_max),
+                   (self.pd_min, self.pd_max), (self.pcr_min, self.pcr_max)]
+            # Constraint on parameters:
+            cons = ({'type': 'ineq', 'fun': lambda x: -x[0] + self.beta_max},
+                    {'type': 'ineq', 'fun': lambda x: -x[1] + self.sigma_max},
+                    {'type': 'ineq', 'fun': lambda x: -x[2] + self.gamma_max},
+                    {'type': 'ineq', 'fun': lambda x: -x[3] + self.hp_max},
+                    {'type': 'ineq', 'fun': lambda x: -x[4] + self.hcr_max},
+                    {'type': 'ineq', 'fun': lambda x: -x[5] + self.pc_max},
+                    {'type': 'ineq', 'fun': lambda x: -x[6] + self.pd_max},
+                    {'type': 'ineq', 'fun': lambda x: -x[7] + self.pcr_max},
+                    {'type': 'ineq', 'fun': lambda x: x[0] - self.beta_min},
+                    {'type': 'ineq', 'fun': lambda x: x[1] - self.sigma_min},
+                    {'type': 'ineq', 'fun': lambda x: x[2] - self.gamma_min},
+                    {'type': 'ineq', 'fun': lambda x: x[3] - self.hp_min},
+                    {'type': 'ineq', 'fun': lambda x: x[4] - self.hcr_min},
+                    {'type': 'ineq', 'fun': lambda x: x[5] - self.pc_min},
+                    {'type': 'ineq', 'fun': lambda x: x[6] - self.pd_min},
+                    {'type': 'ineq', 'fun': lambda x: x[7] - self.pcr_min})
 
-        # Optimizer
-        res = None
-        if self.LBFGSB:
-            res = minimize(self.objective, np.asarray(init_prm),
-                           method='L-BFGS-B',
-                           args=('method_1'),
-                           bounds=bds)
-        else:
-            if self.cobyla:
+            # Optimizer
+            res = None
+            if self.LBFGSB:
                 res = minimize(self.objective, np.asarray(init_prm),
-                               method='COBYLA',
-                               options={'eps': self.opti_step},
+                               method='L-BFGS-B',
                                args=('method_1'),
-                               constraints=cons)
-            else:   # Auto
-                res = minimize(self.objective, np.asarray(init_prm),
-                               constraints=cons,
-                               options={'eps': self.opti_step},
                                bounds=bds)
+            else:
+                if self.cobyla:
+                    res = minimize(self.objective, np.asarray(init_prm),
+                                   method='COBYLA',
+                                   options={'eps': self.opti_step},
+                                   args=('method_1'),
+                                   constraints=cons)
+                else:   # Auto
+                    res = minimize(self.objective, np.asarray(init_prm),
+                                   constraints=cons,
+                                   options={'eps': self.opti_step},
+                                   bounds=bds)
 
 
-        # Print optimizer result
-        print(res)
-        # Update model parameters:
-        self.beta = res.x[0]
-        self.sigma = res.x[1]
-        self.gamma = res.x[2]
-        self.hp = res.x[3]
-        self.hcr = res.x[4]
-        self.pc = res.x[5]
-        self.pd = res.x[6]
-        self.pcr = res.x[7]
-        self.s = res.x[8]
-        self.t = res.x[9]
+            # Print optimizer result
+            print(res)
+            # Update model parameters:
+            self.beta = res.x[0]
+            self.sigma = res.x[1]
+            self.gamma = res.x[2]
+            self.hp = res.x[3]
+            self.hcr = res.x[4]
+            self.pc = res.x[5]
+            self.pd = res.x[6]
+            self.pcr = res.x[7]
+
+        if self.fit_type == 'type_2':
+            """
+            ================================================
+            Fitting in two steps:
+            ================================================            
+            """
+            # Initial values of parameters for the first step:
+            init_prm = (self.beta, self.sigma, self.gamma, self.hp)
+            # Initial state:
+            init_state = self.get_initial_state()
+            # Time vector:
+            time = self.dataset[:, 0]
+            # Bounds
+            bds = [(self.beta_min, self.beta_max), (self.sigma_min, self.sigma_max), (self.gamma_min, self.gamma_max),
+                   (self.hp_min, self.hp_max)]
+            # Constraint on parameters:
+            cons = ({'type': 'ineq', 'fun': lambda x: -x[0] + self.beta_max},
+                    {'type': 'ineq', 'fun': lambda x: -x[1] + self.sigma_max},
+                    {'type': 'ineq', 'fun': lambda x: -x[2] + self.gamma_max},
+                    {'type': 'ineq', 'fun': lambda x: -x[3] + self.hp_max},
+                    {'type': 'ineq', 'fun': lambda x: x[0] - self.beta_min},
+                    {'type': 'ineq', 'fun': lambda x: x[1] - self.sigma_min},
+                    {'type': 'ineq', 'fun': lambda x: x[2] - self.gamma_min},
+                    {'type': 'ineq', 'fun': lambda x: x[3] - self.hp_min})
+
+            # Optimizer
+            res = None
+            if self.LBFGSB:
+                res = minimize(self.objective, np.asarray(init_prm),
+                               method='L-BFGS-B',
+                               args=('method_2'),
+                               bounds=bds)
+            else:
+                if self.cobyla:
+                    res = minimize(self.objective, np.asarray(init_prm),
+                                   method='COBYLA',
+                                   options={'eps': self.opti_step},
+                                   args=('method_2'),
+                                   constraints=cons)
+                else:   # Auto
+                    res = minimize(self.objective, np.asarray(init_prm),
+                                   constraints=cons,
+                                   options={'eps': self.opti_step},
+                                   args=('method_2'),
+                                   bounds=bds)
+
+
+            # Print optimizer result
+            print(res)
+            # Update model parameters:
+            self.beta = res.x[0]
+            self.sigma = res.x[1]
+            self.gamma = res.x[2]
+            self.hp = res.x[3]
+
+
 
     def objective(self, parameters, method, print_details=False):
 
@@ -259,8 +326,8 @@ class SEIR():
                     n = k
                     k = tmp
                 if k < 0:
+                    n += - k + 1
                     k = 1
-                    n += k + 1
                 n *= self.b_s_1
                 prob = binom.pmf(k=k, n=n, p=p)
                 if prob > 0:
@@ -284,8 +351,8 @@ class SEIR():
                     n = k
                     k = tmp
                 if k < 0:
+                    n += - k + 1
                     k = 1
-                    n += k + 1
                 n *= self.b_s_2
                 prob = binom.pmf(k=k, n=n, p=p)
                 if prob > 0:
@@ -308,8 +375,8 @@ class SEIR():
                     n = k
                     k = tmp
                 if k < 0:
+                    n += - k + 1
                     k = 1
-                    n += k + 1
                 n *= self.b_s_3
                 prob = binom.pmf(k=k, n=n, p=p)
                 if prob > 0:
@@ -332,8 +399,8 @@ class SEIR():
                     n = k
                     k = tmp
                 if k < 0:
+                    n += - k + 1
                     k = 1
-                    n += k + 1
                 n *= self.b_s_4
                 prob = binom.pmf(k=k, n=n, p=p)
                 if prob > 0:
@@ -356,8 +423,8 @@ class SEIR():
                     n = k
                     k = tmp
                 if k < 0:
+                    n += - k + 1
                     k = 1
-                    n += k + 1
                 n *= self.b_s_5
                 prob = binom.pmf(k=k, n=n, p=p)
                 if prob > 0:
@@ -380,8 +447,8 @@ class SEIR():
                     n = k
                     k = tmp
                 if k < 0:
+                    n += - k + 1
                     k = 1
-                    n += k + 1
                 n *= self.b_s_6
                 prob = binom.pmf(k=k, n=n, p=p)
                 if prob > 0:
@@ -400,7 +467,84 @@ class SEIR():
                     print('Fatalities: {} - {}'.format(np.around(pred[i][6]), self.dataset[i][6]))
 
             print(prb)
+            return prb
 
+        if method == 'method_2':
+            # Here we try to maximise the probability of each observations
+            # Make predictions:
+            pr = tuple(parameters)
+            params = (pr[0], pr[1], pr[2], pr[3], 0, 0, 0, 0, pr[4], pr[5])
+            pred = self.predict(duration=self.dataset.shape[0],
+                                parameters=params)
+            # Uncumul contaminations
+            conta = []
+            conta.append(pred[0][7])
+            for i in range(0, pred.shape[0]):
+                conta.append(pred[i][7] - pred[i-1][7])
+
+            # Compare with dataset:
+            prb = 0
+            print(params)
+            for i in range(0, pred.shape[0]):
+                p_k1 = p_k2 = p_k3 = p_k4 = p_k5 = p_k6 = self.overflow
+                # ======================================= #
+                # PART 1: Fit on cumul positive test
+                # ======================================= #
+                pa = params[8] * params[9]
+                n = np.around(pred[i][7] * pa)
+                k = self.dataset[i][7]
+                p = 1 / self.b_s_1
+                if k < 0 and n < 0:
+                    k *= -1
+                    n *= -1
+                if k > n:
+                    tmp = n
+                    n = k
+                    k = tmp
+                if k < 0:
+                    n += - k + 1
+                    k = 1
+                n *= self.b_s_1
+                prob = binom.pmf(k=k, n=n, p=p)
+                if prob > 0:
+                    p_k1 = np.log(binom.pmf(k=k, n=n, p=p))
+                else:
+                    p_k1 = self.overflow
+                prb -= p_k1 * self.w_1
+
+                # ======================================= #
+                # PART 2: Fit on positive test
+                # ======================================= #
+                pa = params[8] * params[9]
+                n = np.around(conta[i] * pa)
+                k = self.dataset[i][1]
+                p = 1 / self.b_s_2
+                if k < 0 and n < 0:
+                    k *= -1
+                    n *= -1
+                if k > n:
+                    tmp = n
+                    n = k
+                    k = tmp
+                if k < 0:
+                    n += - k + 1
+                    k = 1
+                n *= self.b_s_2
+                prob = binom.pmf(k=k, n=n, p=p)
+                if prob > 0:
+                    p_k2 = np.log(binom.pmf(k=k, n=n, p=p))
+                else:
+                    p_k2 = self.overflow
+                prb -= p_k2 * self.w_2
+
+                if print_details:
+                    print('iter {}: {} - {} - {} - {} - {} - {}'.format(i, p_k1, p_k2, p_k3, p_k4, p_k5, p_k6))
+                    print('test+ cumul: {} - {}'.format(np.around(pred[i][7] * params[8] * params[9]), self.dataset[i][7]))
+                    print('test+: {} - {}'.format(np.around(conta[i] * params[8] * params[9]), self.dataset[i][1]))
+                    print('hospit cumul: {} - {}'.format(np.around(pred[i][8]), self.dataset[i][4]))
+
+
+            print(prb)
             return prb
 
 
@@ -487,7 +631,8 @@ if __name__ == "__main__":
 
 
     # Make a prediction:
-    prd = model.predict(model.dataset.shape[0])
+    params=(model.beta, model.sigma, model.gamma, model.hp, 0, 0, 0, 0, model.s, model.t)
+    prd = model.predict(model.dataset.shape[0], parameters=params)
     for i in range(0, prd.shape[0]):
         prd[i][3] = prd[i][3] * model.s * model.t
 
@@ -520,3 +665,7 @@ if __name__ == "__main__":
 
 
 
+"""
+ATTENTION CHANGER if k < 0
+
+"""
