@@ -94,6 +94,11 @@ class SEIR():
         self.t_min = 0.5
         self.t_max = 1
 
+        # Optimizer choise:
+        self.cobyla = True
+        self.LBFGSB = False
+        self.auto = False
+
     def get_parameters(self):
 
         prm = (self.beta, self.sigma, self.gamma, self.hp, self.hcr, self.pc, self.pd, self.pcr, self.s, self.t)
@@ -186,12 +191,24 @@ class SEIR():
                 {'type': 'ineq', 'fun': lambda x: x[9] - self.t_min})
 
         # Optimizer
-        res = minimize(self.objective, np.asarray(init_prm), method='L-BFGS-B',
-                       constraints=cons, #method='COBYLA',
-                       args=('method_1'),
-                       options={'eps': self.opti_step}, bounds=bds)
-
-
+        res = None
+        if self.LBFGSB:
+            res = minimize(self.objective, np.asarray(init_prm),
+                           method='L-BFGS-B',
+                           args=('method_1'),
+                           bounds=bds)
+        else:
+            if self.cobyla:
+                res = minimize(self.objective, np.asarray(init_prm),
+                               method='COBYLA',
+                               options={'eps': self.opti_step},
+                               args=('method_1'),
+                               constraints=cons)
+            else:   # Auto
+                res = minimize(self.objective, np.asarray(init_prm),
+                               constraints=cons,
+                               options={'eps': self.opti_step},
+                               bounds=bds)
 
 
         # Print optimizer result
