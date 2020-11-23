@@ -59,21 +59,21 @@ class SEIR():
         self.overflow = - 1000
 
         # Smoothing data or not
-        self.smoothing = False
+        self.smoothing = True
 
         # Binomial smoother: ex: if = 2: predicted value *= 2 and p /= 2 WARNING: only use integer
-        self.b_s_1 = 8
-        self.b_s_2 = 6
+        self.b_s_1 = 6
+        self.b_s_2 = 4
         self.b_s_3 = 6
-        self.b_s_4 = 6
-        self.b_s_5 = 2
-        self.b_s_6 = 2
+        self.b_s_4 = 4
+        self.b_s_5 = 4
+        self.b_s_6 = 4
 
         # Binomial smoother use for model scoring:
         self.b_s_score = 2
 
         # Optimizer step size
-        self.opti_step = 0.1
+        self.opti_step = 0.01
 
         # Optimizer constraints
         self.beta_min = 0.1
@@ -98,7 +98,7 @@ class SEIR():
         self.t_max = 1
 
         # Optimizer choise: COBYLA LBFGSB ou AUTO
-        self.optimizer = 'COBYLA'
+        self.optimizer = 'LBFGSB'
 
         # Fit type:
         self.fit_type = 'type_1'
@@ -212,8 +212,9 @@ class SEIR():
             if self.optimizer == 'LBFGSB':
                 res = minimize(self.objective, np.asarray(init_prm),
                                method='L-BFGS-B',
-                               args=('method_1'),
-                               bounds=bds)
+                               options={'eps': self.opti_step},
+                               #bounds=bds,
+                               args=('method_1'))
             else:
                 if self.optimizer == 'COBYLA':
                     res = minimize(self.objective, np.asarray(init_prm),
@@ -224,8 +225,7 @@ class SEIR():
                     res = minimize(self.objective, np.asarray(init_prm),
                                    constraints=cons,
                                    options={'eps': self.opti_step},
-                                   args=('method_1'),
-                                   bounds=bds)
+                                   args=('method_1'))
 
 
             # Print optimizer result
@@ -311,6 +311,7 @@ class SEIR():
             # Make predictions:
             params = tuple(parameters)
             init_state = self.get_initial_state(sensib=parameters[-2], test_rate=parameters[-1])
+            #print(params)
             pred = self.predict(duration=self.dataset.shape[0],
                                 parameters=params,
                                 initial_state=init_state)
@@ -322,7 +323,6 @@ class SEIR():
 
             # Compare with dataset:
             prb = 0
-            #print(params)
             for i in range(0, pred.shape[0]):
                 p_k1 = p_k2 = p_k3 = p_k4 = p_k5 = p_k6 = self.overflow
                 # ======================================= #
@@ -704,7 +704,6 @@ class SEIR():
 
 if __name__ == "__main__":
 
-    parser = ArgumentParser(usage)
 
     # Create the model:
     model = SEIR()
