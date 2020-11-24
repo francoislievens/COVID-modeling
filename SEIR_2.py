@@ -8,9 +8,6 @@ from scipy.stats import binom as binom
 
 from smoothing import dataframe_smoothing
 
-
-
-
 class SEIR():
 
     def __init__(self):
@@ -518,29 +515,131 @@ class SEIR():
 
     def set_param(self):
 
-        self.beta = 0.41183
-        self.sigma = 0.8348
-        self.gamma = 0.136771
-        self.hp = 0.149410
-        self.hcr = 0.255785
-        self.pc = 0.80904
-        self.pd = 0.06333
-        self.pcr = 0.3153
+        """
+        self.beta = 0.236475954
+        self.sigma = 0.658160754
+        self.gamma = 0.100151958
+        self.hp = 0.06991311
+        self.hcr = 0.010169691
+        self.pc = 0.077351204
+        self.pd = 0.03696128
+        self.pcr = 0.233874438
         self.s = 0.7798
         self.t = 0.7978
+        """
+
+        """
+        Note: header for the result file: 
+        sum_tot;beta;sigma;gamma;hp;hcr;pc;pd;pcr;sensib;test_rate;w1;w2;w3;w4;w5;binom_smoother;opti_step;optimizer;smoothing;mean_tot_bis;sum_tot;std_tot;mean_test;sum_test;std_test;mean_hospit;sum_hospit;std_hospit;mean_critical;sum_critical;std_critical;mean_fata;sum_fata;std_fata
+        
+        """
+
+        self.beta = 0.6001525730398979
+        self.sigma = 0.658160754
+        self.gamma = 0.100151958
+        self.hp = 0.06991311
+        self.hcr = 0.010169691
+        self.pc = 0.077351204
+        self.pd = 0.03696128
+        self.pcr = 0.233874438
+        self.s = 0.7798
+        self.t = 0.7978
+
+def valid_result_analysis():
+
+    # Import validation result:
+    result = pd.read_csv('validation_result.csv', sep=';')
+
+    result.sort_values(by=['sum_tot', 'std_tot'], inplace=True, ignore_index=True, ascending=False)
+    print(result)
+
+    # Numpy version:
+    npr = result.to_numpy()
+
+    # exec:
+    for i in range(0, npr.shape[0]):
+
+        # Create a model:
+        model = SEIR()
+
+        # Load parameters:
+        model.beta = npr[i][1]
+        model.sigma = npr[i][2]
+        model.gamma = npr[i][3]
+        model.hp = npr[i][4]
+        model.hcr = npr[i][5]
+        model.pc = npr[i][6]
+        model.pd = npr[i][7]
+        model.pcr = npr[i][8]
+        model.s = npr[i][9]
+        model.t = npr[i][10]
+
+        model.optimizer = 'COBYLA'
+        model.smoothing = False
+
+        # Import dataset:
+        model.import_dataset()
+
+        # Make predictions:
+        predictions = model.predict(duration=model.dataset.shape[0])
+
+
+        # Plot:
+        time = model.dataset[:, 0]
+        # Adapt test + with sensit and testing rate
+        positive_cumul = []
+        for j in range(0, len(time)):
+            positive_cumul.append(predictions[j][7] * model.s * model.t)
+
+        # Plot cumul positive
+        plt.scatter(time, model.dataset[:, 7], c='blue', label='cumul test+')
+        plt.plot(time, positive_cumul, c='blue', label='cumul test+')
+        # Plot hospit
+        plt.scatter(time, model.dataset[:, 4], c='red', label='hospit cumul pred')
+        plt.plot(time, predictions[:, 8], c='red', label='pred hopit cumul')
+        plt.legend()
+        plt.title('index {}'.format(i))
+        plt.show()
+
+        # Plot critical
+        plt.scatter(time, model.dataset[:, 5], c='green', label='critical data')
+        plt.plot(time, predictions[:, 5], c='green', label='critical pred')
+        plt.scatter(time, model.dataset[:, 6], c='black', label='fatalities data')
+        plt.plot(time, predictions[:, 6], c='black', label='fatalities pred')
+        plt.legend()
+        plt.title('index {}'.format(i))
+        plt.show()
+
+        print('---------------------------------------------------------')
+
+        row = result.loc[i, :]
+
+        print(row)
+
+        print("<Press enter/return to continue>")
+        input()
+
+
+
+
+
+
 
 
 if __name__ == "__main__":
 
+    valid_result_analysis()
 
+"""
     # Create the model:
     model = SEIR()
     # Import dataset:
     model.import_dataset()
 
     # Fit:
-    model.fit()
+    #model.fit()
 
+    model.set_param()
     params = model.get_parameters()
 
 
@@ -576,4 +675,4 @@ if __name__ == "__main__":
     plt.legend()
     plt.show()
 
-
+"""
