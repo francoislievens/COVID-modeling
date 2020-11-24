@@ -246,7 +246,7 @@ class SEIR():
             """
             ================================================
             Fitting in two steps:
-            ================================================            
+            ================================================
             """
             # Initial values of parameters for the first step:
             init_prm = (self.beta, self.sigma, self.gamma, self.hp, self.s, self.t)
@@ -763,3 +763,7 @@ if __name__ == "__main__":
     plt.show()
 
 
+<<<<<<< HEAD:old/SEIR.py
+=======
+"""
+>>>>>>> dd14f22b38acdac94bae9ed97909c668328c10c9:SEIR+2.py
