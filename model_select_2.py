@@ -190,6 +190,30 @@ class model_selection():
                                 sum_tot = str(np.sum(raw))
                                 std_tot = str(np.std(raw))
 
+                                # Write in file:
+                                # Make a list of informations:
+                                str_lst = []
+                                str_lst.append(sum_tot)
+                                for item in param_seir:
+                                    str_lst.append(item)
+                                for item in h_param:
+                                    str_lst.append(item)
+                                str_lst.append(mean_tot)
+                                str_lst.append(sum_tot)
+                                str_lst.append(std_tot)
+                                str_lst.append(mean_test)
+                                str_lst.append(sum_test)
+                                str_lst.append(std_test)
+                                str_lst.append(mean_hospit)
+                                str_lst.append(sum_hospit)
+                                str_lst.append(std_hospit)
+                                str_lst.append(mean_critical)
+                                str_lst.append(sum_critical)
+                                str_lst.append(std_critical)
+                                str_lst.append(mean_fata)
+                                str_lst.append(sum_fata)
+                                str_lst.append(std_fata)
+
                                 convert_str_lst = []
                                 for i in range(0, len(str_lst)):
                                     convert_str_lst.append(str(str_lst[i]))
