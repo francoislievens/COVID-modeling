@@ -8,9 +8,6 @@ from scipy.stats import binom as binom
 
 from smoothing import dataframe_smoothing
 
-
-
-
 class SEIR():
 
     def __init__(self):
@@ -26,8 +23,6 @@ class SEIR():
         self.pc = 0.1           # Critical rate
         self.pd = 0.1           # Critical recovery rate
         self.pcr = 0.3          # Critical mortality
-        self.s = 0.765          # Sensitivity
-        self.t = 0.75           # Testing rate in symptomatical
 
         # Learning set
         self.dataframe = None
@@ -47,6 +42,10 @@ class SEIR():
         #        Hyperparameters dashboard:
         # ========================================== #
 
+        # Testing protocol
+        self.s = 0.765          # Sensitivity
+        self.t = 0.79           # Testing rate in symptomatical
+
         # Importance given to each curve during the fitting process
         self.w_1 = 1          # Weight of cumulative positive data
         self.w_2 = 0.5         # Weight of hopit data
@@ -61,18 +60,13 @@ class SEIR():
         self.smoothing = True
 
         # Binomial smoother: ex: if = 2: predicted value *= 2 and p /= 2 WARNING: only use integer
-        self.b_s_1 = 3
-        self.b_s_2 = 3
-        self.b_s_3 = 3
-        self.b_s_4 = 3
-        self.b_s_5 = 3
-
+        self.binom_smoother = 4
 
         # Binomial smoother use for model scoring:
         self.b_s_score = 2
 
         # Optimizer step size
-        self.opti_step = 0.05
+        self.opti_step = 0.1
 
         # Optimizer constraints
         self.beta_min = 0.1
@@ -97,23 +91,30 @@ class SEIR():
         self.t_max = 1
 
         # Optimizer choise: COBYLA LBFGSB ou AUTO
-        self.optimizer = 'LBFGSB'
+        self.optimizer = 'COBYLA'
 
         # Fit type:
         self.fit_type = 'type_1'
 
     def get_parameters(self):
 
-        prm = (self.beta, self.sigma, self.gamma, self.hp, self.hcr, self.pc, self.pd, self.pcr, self.s, self.t)
+        prm = (self.beta, self.sigma, self.gamma, self.hp, self.hcr, self.pc, self.pd, self.pcr)
         return prm
 
     def get_hyper_parameters(self):
 
-        hprm = (self.w_1, self.w_2, self.w_3, self.w_4, self.w_5, self.b_s_1, self.b_s_2,
-                self.b_s_3, self.b_s_4, self.b_s_5, self.opti_step, self.optimizer, self.smoothing)
+        hprm = (self.s, self.t, self.w_1, self.w_2, self.w_3, self.w_4, self.w_5, self.binom_smoother, self.opti_step, self.optimizer, self.smoothing)
         return hprm
-    def get_initial_state(self, sensib=None, test_rate=None):
 
+    def get_initial_state(self, sensib=None, test_rate=None):
+        """
+        Generate an initial state for the model from the dataset
+        according to the sensitivity and the testing rate to
+        estimate the true value of the initial state
+        :param sensib: Sensibility value to use. Use class value if None
+        :param test_rate: Testing rate value to use. Use class value if None
+        :return: An array
+        """
         if sensib is None:
             s = self.s
         else:
@@ -135,8 +136,14 @@ class SEIR():
         init = (S_0, E_0, I_0, R_0, H_0, C_0, D_0, CT_0, CH_0)
         return init
 
-    def differential(self, state, time, beta, sigma, gamma, hp, hcr, pc, pd, pcr, s, t):
-
+    def differential(self, state, time, beta, sigma, gamma, hp, hcr, pc, pd, pcr):
+        """
+        ODE who describe the evolution of the model with the time
+        :param state: An initial state to use
+        :param time: A time vector
+        :return: the evolution of the number of person in each compartiment + cumulative testing rate
+        + cumulative entry in hospital
+        """
         S, E, I, R, H, C, D, CT, CH = state
 
         dS = -(beta * S * I) / (S + I + E + R + H + C + D)
@@ -153,7 +160,14 @@ class SEIR():
         return dS, dE, dI, dR, dH, dC, dD, dCT, dCH
 
     def predict(self, duration, initial_state=None, parameters=None):
-
+        """
+        Predict the evolution of the epidemic during the selected duration from a given initial state
+        and given parameters
+        :param duration: Use positive integer value
+        :param initial_state: Default = use self.get_initial_state()
+        :param parameters: Default = use self.get_parameters()
+        :return: a numpy array of 8 columns and t rows
+        """
         # Time vector:
         time = np.arange(duration)
         # Parameters to use
@@ -173,17 +187,19 @@ class SEIR():
         return predict
 
     def fit(self):
+        """
+        Compute best epidemic parameters values according to model's hyperparameters and the dataset
+        """
 
         if self.fit_type == 'type_1':
             # Initial values of parameters:
-            init_prm = (self.beta, self.sigma, self.gamma, self.hp, self.hcr, self.pc, self.pd, self.pcr, self.s, self.t)
+            init_prm = (self.beta, self.sigma, self.gamma, self.hp, self.hcr, self.pc, self.pd, self.pcr)
             # Time vector:
             time = self.dataset[:, 0]
             # Bounds
             bds = [(self.beta_min, self.beta_max), (self.sigma_min, self.sigma_max), (self.gamma_min, self.gamma_max),
                    (self.hp_min, self.hp_max), (self.hcr_min, self.hcr_max), (self.pc_min, self.pc_max),
-                   (self.pd_min, self.pd_max), (self.pcr_min, self.pcr_max), (self.s_min, self.s_max),
-                   (self.t_min, self.t_max)]
+                   (self.pd_min, self.pd_max), (self.pcr_min, self.pcr_max)]
             # Constraint on parameters:
             cons = ({'type': 'ineq', 'fun': lambda x: -x[0] + self.beta_max},
                     {'type': 'ineq', 'fun': lambda x: -x[1] + self.sigma_max},
@@ -193,8 +209,6 @@ class SEIR():
                     {'type': 'ineq', 'fun': lambda x: -x[5] + self.pc_max},
                     {'type': 'ineq', 'fun': lambda x: -x[6] + self.pd_max},
                     {'type': 'ineq', 'fun': lambda x: -x[7] + self.pcr_max},
-                    {'type': 'ineq', 'fun': lambda x: -x[8] + self.s_max},
-                    {'type': 'ineq', 'fun': lambda x: -x[9] + self.t_max},
                     {'type': 'ineq', 'fun': lambda x: x[0] - self.beta_min},
                     {'type': 'ineq', 'fun': lambda x: x[1] - self.sigma_min},
                     {'type': 'ineq', 'fun': lambda x: x[2] - self.gamma_min},
@@ -202,9 +216,7 @@ class SEIR():
                     {'type': 'ineq', 'fun': lambda x: x[4] - self.hcr_min},
                     {'type': 'ineq', 'fun': lambda x: x[5] - self.pc_min},
                     {'type': 'ineq', 'fun': lambda x: x[6] - self.pd_min},
-                    {'type': 'ineq', 'fun': lambda x: x[7] - self.pcr_min},
-                    {'type': 'ineq', 'fun': lambda x: x[8] - self.s_min},
-                    {'type': 'ineq', 'fun': lambda x: x[9] - self.t_min})
+                    {'type': 'ineq', 'fun': lambda x: x[7] - self.pcr_min})
 
             # Optimizer
             res = None
@@ -212,7 +224,8 @@ class SEIR():
                 res = minimize(self.objective, np.asarray(init_prm),
                                method='L-BFGS-B',
                                options={'eps': self.opti_step},
-                               #bounds=bds,
+                               constraints=cons,
+                               bounds=bds,
                                args=('method_1'))
             else:
                 if self.optimizer == 'COBYLA':
@@ -228,7 +241,7 @@ class SEIR():
 
 
             # Print optimizer result
-            print(res)
+            #print(res)
             # Update model parameters:
             self.beta = res.x[0]
             self.sigma = res.x[1]
@@ -238,88 +251,22 @@ class SEIR():
             self.pc = res.x[5]
             self.pd = res.x[6]
             self.pcr = res.x[7]
-            self.s = res.x[8]
-            self.t = res.x[9]
-
-        if self.fit_type == 'type_2':
-            """
-            ================================================
-            Fitting in two steps:
-            ================================================            
-            """
-            # Initial values of parameters for the first step:
-            init_prm = (self.beta, self.sigma, self.gamma, self.hp, self.s, self.t)
-            # Time vector:
-            time = self.dataset[:, 0]
-            # Bounds
-            bds = [(self.beta_min, self.beta_max), (self.sigma_min, self.sigma_max), (self.gamma_min, self.gamma_max),
-                   (self.hp_min, self.hp_max), (self.s_min, self.s_max),
-                   (self.t_min, self.t_max)]
-            # Constraint on parameters:
-            cons = ({'type': 'ineq', 'fun': lambda x: -x[0] + self.beta_max},
-                    {'type': 'ineq', 'fun': lambda x: -x[1] + self.sigma_max},
-                    {'type': 'ineq', 'fun': lambda x: -x[2] + self.gamma_max},
-                    {'type': 'ineq', 'fun': lambda x: -x[3] + self.hp_max},
-                    {'type': 'ineq', 'fun': lambda x: -x[4] + self.s_max},
-                    {'type': 'ineq', 'fun': lambda x: -x[5] + self.t_max},
-                    {'type': 'ineq', 'fun': lambda x: x[0] - self.beta_min},
-                    {'type': 'ineq', 'fun': lambda x: x[1] - self.sigma_min},
-                    {'type': 'ineq', 'fun': lambda x: x[2] - self.gamma_min},
-                    {'type': 'ineq', 'fun': lambda x: x[3] - self.hp_min},
-                    {'type': 'ineq', 'fun': lambda x: x[4] - self.s_min},
-                    {'type': 'ineq', 'fun': lambda x: x[5] - self.t_min})
-
-            # Optimizer
-            res = None
-            if self.LBFGSB:
-                res = minimize(self.objective, np.asarray(init_prm),
-                               method='L-BFGS-B',
-                               args=('method_2'),
-                               bounds=bds)
-            else:
-                if self.cobyla:
-                    res = minimize(self.objective, np.asarray(init_prm),
-                                   method='COBYLA',
-                                   options={'eps': self.opti_step},
-                                   args=('method_2'),
-                                   constraints=cons)
-                else:   # Auto
-                    res = minimize(self.objective, np.asarray(init_prm),
-                                   constraints=cons,
-                                   options={'eps': self.opti_step},
-                                   args=('method_2'),
-                                   bounds=bds)
-
-
-            # Print optimizer result
-            print(res)
-            # Update model parameters:
-            self.beta = res.x[0]
-            self.sigma = res.x[1]
-            self.gamma = res.x[2]
-            self.hp = res.x[3]
-            self.s = res.x[4]
-            self.t = res.x[5]
-
-
 
     def objective(self, parameters, method, print_details=False):
+        """
+        The objective function to minimize during the fitting process.
+        These function compute the probability of each observed values accroding to predictions
+        take the logarighm value and make the sum.
+        """
 
         if method == 'method_1':
-            # Here we try to maximise the probability of each observations
             # Make predictions:
             params = tuple(parameters)
-            init_state = self.get_initial_state(sensib=parameters[-2], test_rate=parameters[-1])
+            init_state = self.get_initial_state()
             #print(params)
             pred = self.predict(duration=self.dataset.shape[0],
                                 parameters=params,
                                 initial_state=init_state)
-            # Uncumul contaminations
-            conta = []
-            conta.append(pred[0][7])
-            for i in range(0, pred.shape[0]):
-                conta.append(pred[i][7] - pred[i-1][7])
-
             # Compare with dataset:
             prb = 0
             for i in range(0, pred.shape[0]):
@@ -327,10 +274,10 @@ class SEIR():
                 # ======================================= #
                 # PART 1: Fit on cumul positive test
                 # ======================================= #
-                pa = params[8] * params[9]
+                pa = self.s * self.t
                 n = np.around(pred[i][7] * pa)
                 k = self.dataset[i][7]
-                p = 1 / self.b_s_1
+                p = 1 / self.binom_smoother
                 if k < 0 and n < 0:
                     k *= -1
                     n *= -1
@@ -341,7 +288,7 @@ class SEIR():
                 if k < 0:
                     n += - k + 1
                     k = 1
-                n *= self.b_s_1
+                n *= self.binom_smoother
                 prob = binom.pmf(k=k, n=n, p=p)
                 if prob > 0:
                     p_k1 = np.log(binom.pmf(k=k, n=n, p=p))
@@ -354,7 +301,7 @@ class SEIR():
                 # ======================================= #
                 n = np.around(pred[i][4])
                 k = self.dataset[i][3]
-                p = 1 / self.b_s_2
+                p = 1 / self.binom_smoother
                 if k < 0 and n < 0:
                     k *= -1
                     n *= -1
@@ -365,7 +312,7 @@ class SEIR():
                 if k < 0:
                     n += - k + 1
                     k = 1
-                n *= self.b_s_2
+                n *= self.binom_smoother
                 prob = binom.pmf(k=k, n=n, p=p)
                 if prob > 0:
                     p_k2 = np.log(binom.pmf(k=k, n=n, p=p))
@@ -378,7 +325,7 @@ class SEIR():
                 # ======================================= #
                 n = np.around(pred[i][8])
                 k = self.dataset[i][4]
-                p = 1 / self.b_s_3
+                p = 1 / self.binom_smoother
                 if k < 0 and n < 0:
                     k *= -1
                     n *= -1
@@ -389,7 +336,7 @@ class SEIR():
                 if k < 0:
                     n += - k + 1
                     k = 1
-                n *= self.b_s_3
+                n *= self.binom_smoother
                 prob = binom.pmf(k=k, n=n, p=p)
                 if prob > 0:
                     p_k3 = np.log(binom.pmf(k=k, n=n, p=p))
@@ -402,7 +349,7 @@ class SEIR():
                 # ======================================= #
                 n = np.around(pred[i][5])
                 k = self.dataset[i][5]
-                p = 1 / self.b_s_4
+                p = 1 / self.binom_smoother
                 if k < 0 and n < 0:
                     k *= -1
                     n *= -1
@@ -413,7 +360,7 @@ class SEIR():
                 if k < 0:
                     n += - k + 1
                     k = 1
-                n *= self.b_s_4
+                n *= self.binom_smoother
                 prob = binom.pmf(k=k, n=n, p=p)
                 if prob > 0:
                     p_k4 = np.log(binom.pmf(k=k, n=n, p=p))
@@ -422,11 +369,11 @@ class SEIR():
                 prb -= p_k4 * self.w_4
 
                 # ======================================= #
-                # Part 6: Fit on Fatalities
+                # Part 5: Fit on Fatalities
                 # ======================================= #
                 n = np.around(pred[i][6])
                 k = self.dataset[i][6]
-                p = 1 / self.b_s_5
+                p = 1 / self.binom_smoother
                 if k < 0 and n < 0:
                     k *= -1
                     n *= -1
@@ -437,7 +384,7 @@ class SEIR():
                 if k < 0:
                     n += - k + 1
                     k = 1
-                n *= self.b_s_5
+                n *= self.binom_smoother
                 prob = binom.pmf(k=k, n=n, p=p)
                 if prob > 0:
                     p_k5 = np.log(binom.pmf(k=k, n=n, p=p))
@@ -453,7 +400,7 @@ class SEIR():
                     print('critical: {} - {}'.format(np.around(pred[i][5]), self.dataset[i][5]))
                     print('Fatalities: {} - {}'.format(np.around(pred[i][6]), self.dataset[i][6]))
 
-            print(prb)
+            #print(prb)
             return prb
 
 
@@ -571,6 +518,12 @@ class SEIR():
         if output == 'raw':
             return raw
 
+    def opti_rates(self):
+        """
+        Optimize the values of sensitivity and testing rate after pré-fit
+        """
+        pass
+
 
 
     def import_dataset(self):
@@ -595,30 +548,135 @@ class SEIR():
 
 
     def set_param(self):
+        """
+        Set the actual best values of parameters:
 
-        self.beta = 0.41183
-        self.sigma = 0.8348
-        self.gamma = 0.136771
-        self.hp = 0.149410
-        self.hcr = 0.255785
-        self.pc = 0.80904
-        self.pd = 0.06333
-        self.pcr = 0.3153
-        self.s = 0.7798
-        self.t = 0.7978
+        Note: header for the result file: 
+        sum_tot;beta;sigma;gamma;hp;hcr;pc;pd;pcr;sensib;test_rate;w1;w2;w3;w4;w5;binom_smoother;opti_step;optimizer;smoothing;mean_tot_bis;sum_tot;std_tot;mean_test;sum_test;std_test;mean_hospit;sum_hospit;std_hospit;mean_critical;sum_critical;std_critical;mean_fata;sum_fata;std_fata
+        """
+
+        # Epidemic parameters:
+
+        self.beta = 0.545717
+        self.sigma = 0.778919
+        self.gamma = 0.215823
+        self.hp = 0.196489
+        self.hcr = 0.0514182
+        self.pc = 0.075996
+        self.pd = 0.0458608
+        self.pcr = 0.293681
+        self.s = 0.765
+        self.t = 0.75
+
+        # Hyper parameters:
+        self.s = 0.765
+        self.t = 0.75
+        self.w_1 = 2
+        self.w_2 = 1
+        self.w_3 = 1
+        self.w_4 = 2
+        self.w_5 = 1
+        self.binom_smoother = 3
+        self.opti_step = 0.1
+        self.optimizer = 'COBYLA'
+        self.smoothing = False
+
+
+def valid_result_analysis():
+
+    # Import validation result:
+    result = pd.read_csv('validation_result.csv', sep=';')
+
+    result.sort_values(by=['sum_tot', 'std_tot'], inplace=True, ignore_index=True, ascending=False)
+    print(result)
+
+    # Numpy version:
+    npr = result.to_numpy()
+
+    # exec:
+    for i in range(0, npr.shape[0]):
+
+        # Create a model:
+        model = SEIR()
+
+        # Load parameters:
+        model.beta = npr[i][1]
+        model.sigma = npr[i][2]
+        model.gamma = npr[i][3]
+        model.hp = npr[i][4]
+        model.hcr = npr[i][5]
+        model.pc = npr[i][6]
+        model.pd = npr[i][7]
+        model.pcr = npr[i][8]
+        model.s = npr[i][9]
+        model.t = npr[i][10]
+
+        model.optimizer = 'COBYLA'
+        model.smoothing = False
+
+        # Import dataset:
+        model.import_dataset()
+
+        # Make predictions:
+        predictions = model.predict(duration=model.dataset.shape[0])
+
+
+        # Plot:
+        time = model.dataset[:, 0]
+        # Adapt test + with sensit and testing rate
+        positive_cumul = []
+        for j in range(0, len(time)):
+            positive_cumul.append(predictions[j][7] * model.s * model.t)
+
+        # Plot cumul positive
+        plt.scatter(time, model.dataset[:, 7], c='blue', label='cumul test+')
+        plt.plot(time, positive_cumul, c='blue', label='cumul test+')
+        # Plot hospit
+        plt.scatter(time, model.dataset[:, 4], c='red', label='hospit cumul pred')
+        plt.plot(time, predictions[:, 8], c='red', label='pred hopit cumul')
+        plt.legend()
+        plt.title('index {}'.format(i))
+        plt.show()
+
+        # Plot critical
+        plt.scatter(time, model.dataset[:, 5], c='green', label='critical data')
+        plt.plot(time, predictions[:, 5], c='green', label='critical pred')
+        plt.scatter(time, model.dataset[:, 6], c='black', label='fatalities data')
+        plt.plot(time, predictions[:, 6], c='black', label='fatalities pred')
+        plt.legend()
+        plt.title('index {}'.format(i))
+        plt.show()
+
+        print('---------------------------------------------------------')
+
+        row = result.loc[i, :]
+
+        print(row)
+
+        print("<Press enter/return to continue>")
+        input()
+
+
+
+
+
+
 
 
 if __name__ == "__main__":
 
+    valid_result_analysis()
 
+"""
     # Create the model:
     model = SEIR()
     # Import dataset:
     model.import_dataset()
 
     # Fit:
-    model.fit()
+    #model.fit()
 
+    model.set_param()
     params = model.get_parameters()
 
 
@@ -629,7 +687,6 @@ if __name__ == "__main__":
     for i in range(0, prd.shape[0]):
         prd[i][7] = prd[i][7] * model.s * model.t
 
-    print(prd)
 
     print('=== For cumul positif: ')
     for i in range(0, 10):
@@ -655,4 +712,4 @@ if __name__ == "__main__":
     plt.legend()
     plt.show()
 
-
+"""
