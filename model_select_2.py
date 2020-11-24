@@ -140,7 +140,7 @@ class model_selection():
                                     final_str = ';'.join(convert_str_lst)
 
                                     file = open(
-                                        'mod_select_result_part{}-{}.csv'.format(select_part, self.smoothing), "a")
+                                        'mod_select_result_part{}-{}-{}.csv'.format(select_part, self.smoothing, self.model.optimizer), "a")
                                     file.write(final_str)
                                     file.write('\n')
 
@@ -223,7 +223,8 @@ class model_selection():
                                 final_str = ';'.join(convert_str_lst)
 
                                 file = open(
-                                    'mod_select_result_part{}-{}.csv'.format(select_part, self.smoothing), "a")
+                                    'mod_select_result_part{}-{}-{}.csv'.format(select_part, self.smoothing,
+                                                                                self.model.optimizer), "a")
                                 file.write(final_str)
                                 file.write('\n')
 
