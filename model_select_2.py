@@ -150,7 +150,6 @@ class model_selection():
 
                                 iter += 1
                                 print('iter {} / {}'.format(iter, total_iter))
-                                self.model.opti_step = step_size
 
                                 # Reinit the model
                                 self.model.beta = 0.3  # Contamination rate
