@@ -28,7 +28,7 @@
       <recent name="C:\Users\franc\Documents\Unif\BigData Project\public repository\COVID-modeling\old" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.SEIR">
+  <component name="RunManager" selected="Python.SEIRV3">
     <configuration name="SEIR" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="COVID-modeling" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -51,7 +51,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="SEIR_BIS (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="SEIRV3" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="COVID-modeling" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -64,7 +64,7 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/SEIR_BIS.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/SEIRV3.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -95,7 +95,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="SEIR_BIS" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="SEIR_SEQUENTIAL" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="COVID-modeling" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -108,7 +108,7 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="C:\Users\franc\Documents\Unif\BigData Project\public repository\COVID-modeling\SEIR_BIS.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/SEIR_SEQUENTIAL.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -117,7 +117,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="model_select_2" type="PythonConfigurationType" factoryName="Python" temporary="true">
+    <configuration name="SEIR_SEQ_BIS" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="COVID-modeling" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -130,8 +130,8 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/model_select.py" />
-      <option name="PARAMETERS" value="--smooth 1 --part 2 --opti COBYLA" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/SEIR_SEQ_BIS.py" />
+      <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -162,19 +162,20 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Python.test" />
-      <item itemvalue="Python.model_select_2" />
       <item itemvalue="Python.SEIR_BIS" />
       <item itemvalue="Python.SEIR" />
-      <item itemvalue="Python.SEIR_BIS (1)" />
+      <item itemvalue="Python.SEIR_SEQUENTIAL" />
+      <item itemvalue="Python.SEIR_SEQ_BIS" />
+      <item itemvalue="Python.test" />
+      <item itemvalue="Python.SEIRV3" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.SEIRV3" />
+        <item itemvalue="Python.test" />
         <item itemvalue="Python.SEIR" />
-        <item itemvalue="Python.SEIR_BIS (1)" />
-        <item itemvalue="Python.model_select_2" />
-        <item itemvalue="Python.SEIR_BIS" />
-        <item itemvalue="Python.SEIR_BIS" />
+        <item itemvalue="Python.SEIR_SEQ_BIS" />
+        <item itemvalue="Python.SEIR_SEQUENTIAL" />
       </list>
     </recent_temporary>
   </component>
@@ -192,7 +193,8 @@
       <workItem from="1606174513354" duration="1185000" />
       <workItem from="1606210682668" duration="3166000" />
       <workItem from="1606215361049" duration="5770000" />
-      <workItem from="1606224622081" duration="34890000" />
+      <workItem from="1606224622081" duration="72489000" />
+      <workItem from="1606386112732" duration="668000" />
     </task>
     <servers />
   </component>
@@ -213,62 +215,62 @@
     </state>
     <state x="2369" y="107" key="FileChooserDialogImpl/0.0.1280.689/1920.0.1366.738@1920.0.1366.738" timestamp="1606164944248" />
     <state x="421" y="100" key="FileChooserDialogImpl/0.0.1280.689@0.0.1280.689" timestamp="1606152187589" />
-    <state width="1877" height="500" key="GridCell.Tab.0.bottom" timestamp="1606316544723">
+    <state width="1877" height="476" key="GridCell.Tab.0.bottom" timestamp="1606356973897">
       <screen x="1920" y="0" width="1920" height="1050" />
     </state>
     <state width="1877" height="356" key="GridCell.Tab.0.bottom/-1920.0.1280.700/1920.0.1920.1050/0.0.1920.1050@0.0.1920.1050" timestamp="1606303093034" />
-    <state width="1877" height="500" key="GridCell.Tab.0.bottom/-1920.0.1280.700/1920.0.1920.1050/0.0.1920.1050@1920.0.1920.1050" timestamp="1606316544723" />
+    <state width="1877" height="476" key="GridCell.Tab.0.bottom/-1920.0.1280.700/1920.0.1920.1050/0.0.1920.1050@1920.0.1920.1050" timestamp="1606356973897" />
     <state width="1323" height="143" key="GridCell.Tab.0.bottom/0.0.1280.689/-1366.0.1366.738@-1366.0.1366.738" timestamp="1606232660411" />
     <state width="1237" height="70" key="GridCell.Tab.0.bottom/0.0.1280.689/-1366.0.1366.738@0.0.1280.689" timestamp="1606231217268" />
     <state width="1237" height="171" key="GridCell.Tab.0.bottom/0.0.1280.689/1920.0.1366.738@0.0.1280.689" timestamp="1606163176267" />
     <state width="1323" height="475" key="GridCell.Tab.0.bottom/0.0.1280.689/1920.0.1366.738@1920.0.1366.738" timestamp="1606166818390" />
     <state width="1237" height="162" key="GridCell.Tab.0.bottom/0.0.1280.689@0.0.1280.689" timestamp="1606259115882" />
-    <state width="1877" height="500" key="GridCell.Tab.0.center" timestamp="1606316544723">
+    <state width="1877" height="476" key="GridCell.Tab.0.center" timestamp="1606356973897">
       <screen x="1920" y="0" width="1920" height="1050" />
     </state>
     <state width="1877" height="356" key="GridCell.Tab.0.center/-1920.0.1280.700/1920.0.1920.1050/0.0.1920.1050@0.0.1920.1050" timestamp="1606303093034" />
-    <state width="1877" height="500" key="GridCell.Tab.0.center/-1920.0.1280.700/1920.0.1920.1050/0.0.1920.1050@1920.0.1920.1050" timestamp="1606316544723" />
+    <state width="1877" height="476" key="GridCell.Tab.0.center/-1920.0.1280.700/1920.0.1920.1050/0.0.1920.1050@1920.0.1920.1050" timestamp="1606356973897" />
     <state width="1323" height="143" key="GridCell.Tab.0.center/0.0.1280.689/-1366.0.1366.738@-1366.0.1366.738" timestamp="1606232660411" />
     <state width="1237" height="70" key="GridCell.Tab.0.center/0.0.1280.689/-1366.0.1366.738@0.0.1280.689" timestamp="1606231217268" />
     <state width="1237" height="171" key="GridCell.Tab.0.center/0.0.1280.689/1920.0.1366.738@0.0.1280.689" timestamp="1606163176267" />
     <state width="1323" height="475" key="GridCell.Tab.0.center/0.0.1280.689/1920.0.1366.738@1920.0.1366.738" timestamp="1606166818390" />
     <state width="1237" height="162" key="GridCell.Tab.0.center/0.0.1280.689@0.0.1280.689" timestamp="1606259115882" />
-    <state width="1877" height="500" key="GridCell.Tab.0.left" timestamp="1606316544723">
+    <state width="1877" height="476" key="GridCell.Tab.0.left" timestamp="1606356973896">
       <screen x="1920" y="0" width="1920" height="1050" />
     </state>
     <state width="1877" height="356" key="GridCell.Tab.0.left/-1920.0.1280.700/1920.0.1920.1050/0.0.1920.1050@0.0.1920.1050" timestamp="1606303093034" />
-    <state width="1877" height="500" key="GridCell.Tab.0.left/-1920.0.1280.700/1920.0.1920.1050/0.0.1920.1050@1920.0.1920.1050" timestamp="1606316544723" />
+    <state width="1877" height="476" key="GridCell.Tab.0.left/-1920.0.1280.700/1920.0.1920.1050/0.0.1920.1050@1920.0.1920.1050" timestamp="1606356973896" />
     <state width="1323" height="143" key="GridCell.Tab.0.left/0.0.1280.689/-1366.0.1366.738@-1366.0.1366.738" timestamp="1606232660411" />
     <state width="1237" height="70" key="GridCell.Tab.0.left/0.0.1280.689/-1366.0.1366.738@0.0.1280.689" timestamp="1606231217268" />
     <state width="1237" height="171" key="GridCell.Tab.0.left/0.0.1280.689/1920.0.1366.738@0.0.1280.689" timestamp="1606163176267" />
     <state width="1323" height="475" key="GridCell.Tab.0.left/0.0.1280.689/1920.0.1366.738@1920.0.1366.738" timestamp="1606166818390" />
     <state width="1237" height="162" key="GridCell.Tab.0.left/0.0.1280.689@0.0.1280.689" timestamp="1606259115882" />
-    <state width="1877" height="500" key="GridCell.Tab.0.right" timestamp="1606316544723">
+    <state width="1877" height="476" key="GridCell.Tab.0.right" timestamp="1606356973897">
       <screen x="1920" y="0" width="1920" height="1050" />
     </state>
     <state width="1877" height="356" key="GridCell.Tab.0.right/-1920.0.1280.700/1920.0.1920.1050/0.0.1920.1050@0.0.1920.1050" timestamp="1606303093034" />
-    <state width="1877" height="500" key="GridCell.Tab.0.right/-1920.0.1280.700/1920.0.1920.1050/0.0.1920.1050@1920.0.1920.1050" timestamp="1606316544723" />
+    <state width="1877" height="476" key="GridCell.Tab.0.right/-1920.0.1280.700/1920.0.1920.1050/0.0.1920.1050@1920.0.1920.1050" timestamp="1606356973897" />
     <state width="1323" height="143" key="GridCell.Tab.0.right/0.0.1280.689/-1366.0.1366.738@-1366.0.1366.738" timestamp="1606232660411" />
     <state width="1237" height="70" key="GridCell.Tab.0.right/0.0.1280.689/-1366.0.1366.738@0.0.1280.689" timestamp="1606231217268" />
     <state width="1237" height="171" key="GridCell.Tab.0.right/0.0.1280.689/1920.0.1366.738@0.0.1280.689" timestamp="1606163176267" />
     <state width="1323" height="475" key="GridCell.Tab.0.right/0.0.1280.689/1920.0.1366.738@1920.0.1366.738" timestamp="1606166818390" />
     <state width="1237" height="162" key="GridCell.Tab.0.right/0.0.1280.689@0.0.1280.689" timestamp="1606259115882" />
-    <state width="1877" height="352" key="GridCell.Tab.1.bottom" timestamp="1606304299562">
+    <state width="1877" height="352" key="GridCell.Tab.1.bottom" timestamp="1606348719743">
       <screen x="1920" y="0" width="1920" height="1050" />
     </state>
-    <state width="1877" height="352" key="GridCell.Tab.1.bottom/-1920.0.1280.700/1920.0.1920.1050/0.0.1920.1050@1920.0.1920.1050" timestamp="1606304299562" />
-    <state width="1877" height="352" key="GridCell.Tab.1.center" timestamp="1606304299562">
+    <state width="1877" height="352" key="GridCell.Tab.1.bottom/-1920.0.1280.700/1920.0.1920.1050/0.0.1920.1050@1920.0.1920.1050" timestamp="1606348719743" />
+    <state width="1877" height="352" key="GridCell.Tab.1.center" timestamp="1606348719743">
       <screen x="1920" y="0" width="1920" height="1050" />
     </state>
-    <state width="1877" height="352" key="GridCell.Tab.1.center/-1920.0.1280.700/1920.0.1920.1050/0.0.1920.1050@1920.0.1920.1050" timestamp="1606304299562" />
-    <state width="1877" height="352" key="GridCell.Tab.1.left" timestamp="1606304299562">
+    <state width="1877" height="352" key="GridCell.Tab.1.center/-1920.0.1280.700/1920.0.1920.1050/0.0.1920.1050@1920.0.1920.1050" timestamp="1606348719743" />
+    <state width="1877" height="352" key="GridCell.Tab.1.left" timestamp="1606348719743">
       <screen x="1920" y="0" width="1920" height="1050" />
     </state>
-    <state width="1877" height="352" key="GridCell.Tab.1.left/-1920.0.1280.700/1920.0.1920.1050/0.0.1920.1050@1920.0.1920.1050" timestamp="1606304299562" />
-    <state width="1877" height="352" key="GridCell.Tab.1.right" timestamp="1606304299562">
+    <state width="1877" height="352" key="GridCell.Tab.1.left/-1920.0.1280.700/1920.0.1920.1050/0.0.1920.1050@1920.0.1920.1050" timestamp="1606348719743" />
+    <state width="1877" height="352" key="GridCell.Tab.1.right" timestamp="1606348719743">
       <screen x="1920" y="0" width="1920" height="1050" />
     </state>
-    <state width="1877" height="352" key="GridCell.Tab.1.right/-1920.0.1280.700/1920.0.1920.1050/0.0.1920.1050@1920.0.1920.1050" timestamp="1606304299562" />
+    <state width="1877" height="352" key="GridCell.Tab.1.right/-1920.0.1280.700/1920.0.1920.1050/0.0.1920.1050@1920.0.1920.1050" timestamp="1606348719743" />
     <state x="-1063" y="0" key="SettingsEditor" timestamp="1606227137576">
       <screen x="-1366" y="0" width="1366" height="738" />
     </state>
@@ -276,28 +278,33 @@
     <state x="-1063" y="0" key="SettingsEditor/0.0.1280.689/-1366.0.1366.738@-1366.0.1366.738" timestamp="1606227137576" />
     <state x="2223" y="0" key="SettingsEditor/0.0.1280.689/1920.0.1366.738@1920.0.1366.738" timestamp="1606165757166" />
     <state x="284" y="0" key="SettingsEditor/0.0.1280.689@0.0.1280.689" timestamp="1606153250929" />
-    <state x="300" y="-7" width="1043" height="677" maximized="true" key="dock-window-1" timestamp="1606254489085">
-      <screen x="0" y="0" width="1280" height="689" />
+    <state x="300" y="-7" width="1043" height="677" maximized="true" key="dock-window-1" timestamp="1606356974073">
+      <screen x="0" y="0" width="1920" height="1050" />
     </state>
     <state x="1965" y="0" width="537" height="1007" maximized="true" key="dock-window-1/-1920.0.1280.700/1920.0.1920.1050/0.0.1920.1050@0.0.1920.1050" timestamp="1606140546844" />
+    <state x="300" y="-7" width="1043" height="677" maximized="true" key="dock-window-1/-1920.0.1280.700/1920.0.1920.1050/0.0.1920.1050@1920.0.1920.1050" timestamp="1606356974073" />
     <state x="300" y="-7" width="1043" height="677" maximized="true" key="dock-window-1/0.0.1280.689/-1366.0.1366.738@-1366.0.1366.738" timestamp="1606225544608" />
     <state x="2065" y="-16" width="554" height="676" maximized="true" key="dock-window-1/0.0.1280.689/1920.0.1366.738@0.0.1280.689" timestamp="1606161809144" />
     <state x="363" y="90" width="554" height="676" maximized="true" key="dock-window-1/0.0.1280.689/1920.0.1366.738@1920.0.1366.738" timestamp="1606164260895" />
     <state x="300" y="-7" width="1043" height="677" maximized="true" key="dock-window-1/0.0.1280.689@0.0.1280.689" timestamp="1606254489085" />
-    <state x="455" y="15" width="1008" height="1034" key="search.everywhere.popup" timestamp="1606297649350">
-      <screen x="0" y="0" width="1920" height="1050" />
+    <state x="2375" y="15" width="1008" height="1034" key="search.everywhere.popup" timestamp="1606318794786">
+      <screen x="1920" y="0" width="1920" height="1050" />
     </state>
     <state x="455" y="15" width="1008" height="1034" key="search.everywhere.popup/-1920.0.1280.700/1920.0.1920.1050/0.0.1920.1050@0.0.1920.1050" timestamp="1606297649350" />
+    <state x="2375" y="15" width="1008" height="1034" key="search.everywhere.popup/-1920.0.1280.700/1920.0.1920.1050/0.0.1920.1050@1920.0.1920.1050" timestamp="1606318794786" />
     <state x="303" y="10" width="672" height="678" key="search.everywhere.popup/0.0.1280.689/-1366.0.1366.738@-1366.0.1366.738" timestamp="1606215998431" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/COVID_modeling$SEIR__1_.coverage" NAME="SEIR_BIS Coverage Results" MODIFIED="1606297303334" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/COVID_modeling$SEIR_SEQ_BIS.coverage" NAME="SEIR_SEQ_BIS Coverage Results" MODIFIED="1606354377580" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/COVID_modeling$SEIR_.coverage" NAME="SEIR+ Coverage Results" MODIFIED="1606154933290" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/COVID_modeling$SEIR_2.coverage" NAME="SEIR_2 Coverage Results" MODIFIED="1606231004401" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/COVID_modeling$model_select.coverage" NAME="model_select Coverage Results" MODIFIED="1606297699282" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/COVID_modeling$test.coverage" NAME="test Coverage Results" MODIFIED="1606151036395" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/COVID_modeling$SEIR_BIS__1_.coverage" NAME="SEIR_BIS (1) Coverage Results" MODIFIED="1606306102314" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/COVID_modeling$SEIR.coverage" NAME="SEIR Coverage Results" MODIFIED="1606316544716" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/COVID_modeling$SEIR_BIS__1_.coverage" NAME="SEIR_BIS (1) Coverage Results" MODIFIED="1606323959220" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/COVID_modeling$test.coverage" NAME="test Coverage Results" MODIFIED="1606356135103" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/COVID_modeling$SEIR_SEQUENTIAL.coverage" NAME="SEIR_SEQUENTIAL Coverage Results" MODIFIED="1606340674403" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/COVID_modeling$SEIR.coverage" NAME="SEIR Coverage Results" MODIFIED="1606355412453" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/COVID_modeling$SEIRV3.coverage" NAME="SEIRV3 Coverage Results" MODIFIED="1606356724880" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/COVID_modeling$model_select_2.coverage" NAME="model_select_2 Coverage Results" MODIFIED="1606219620643" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

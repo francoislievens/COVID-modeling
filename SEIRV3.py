@@ -15,52 +15,52 @@ class SEIR():
         # ========================================== #
         #           Model parameters
         # ========================================== #
-        self.beta = 0.3         # Contamination rate
-        self.sigma = 0.8        # Incubation rate
-        self.gamma = 0.15       # Recovery rate
-        self.hp = 0.05          # Hospit rate
-        self.hcr = 0.2          # Hospit recovery rate
-        self.pc = 0.1           # Critical rate
-        self.pd = 0.1           # Critical recovery rate
-        self.pcr = 0.3          # Critical mortality
+        self.beta = 0.3  # Contamination rate
+        self.sigma = 0.8  # Incubation rate
+        self.gamma = 0.15  # Recovery rate
+        self.hp = 0.05  # Hospit rate
+        self.hcr = 0.2  # Hospit recovery rate
+        self.pc = 0.1  # Critical rate
+        self.pd = 0.1  # Critical recovery rate
+        self.pcr = 0.3  # Critical mortality
 
         # Learning set
         self.dataframe = None
         self.dataset = None
 
         # Initial state
-        self.I_0 = 2                        # Infected
-        self.E_0 = 3                        # Exposed
-        self.R_0 = 0                        # Recovered
-        self.S_0 = 1000000 - self.I_0 - self.E_0      # Sensible
+        self.I_0 = 2  # Infected
+        self.E_0 = 3  # Exposed
+        self.R_0 = 0  # Recovered
+        self.S_0 = 1000000 - self.I_0 - self.E_0  # Sensible
         self.H_0 = 0
         self.C_0 = 0
         self.D_0 = 0
-        self.CT_0 = self.I_0                # Contamined
+        self.CT_0 = self.I_0  # Contamined
 
         # ========================================== #
         #        Hyperparameters dashboard:
         # ========================================== #
 
         # Testing protocol
-        self.s = 0.7          # Sensitivity
-        self.t = 0.5           # Testing rate in symptomatical
+        self.s = 0.7  # Sensitivity
+        self.t = 0.5  # Testing rate in symptomatical
 
         # Importance given to each curve during the fitting process
-        self.w_1 = 1          # Weight of cumulative positive data
-        self.w_2 = 0.5         # Weight of hopit data
-        self.w_3 = 0.5          # Weight of cumul hospit data
-        self.w_4 = 1            # Weight àf critical data
-        self.w_5 = 1            # Weight of fatalities data
+        self.w_1 = 1  # Weight of cumulative positive data
+        self.w_2 = 0.5  # Weight of hopit data
+        self.w_3 = 0.5  # Weight of cumul hospit data
+        self.w_4 = 1  # Weight àf critical data
+        self.w_5 = 1  # Weight of fatalities data
 
         # Value to return if log(binom.pmf(k,n,p)) = - infinity
         self.overflow = - 1000
 
         # Smoothing data or not
-        self.smoothing = True
+        self.smoothing = False
 
         # Binomial smoother: ex: if = 2: predicted value *= 2 and p /= 2 WARNING: only use integer
-        self.binom_smoother = 4
+        self.binom_smoother = 2
 
         # Binomial smoother use for model scoring:
         self.b_s_score = 2
@@ -71,10 +71,10 @@ class SEIR():
         # Optimizer constraints
         self.beta_min = 0.1
         self.beta_max = 0.9
-        self.sigma_min = 1/5
+        self.sigma_min = 1 / 5
         self.sigma_max = 1
-        self.gamma_min = 1/10
-        self.gamma_max = 1/4
+        self.gamma_min = 1 / 10
+        self.gamma_max = 1 / 4
         self.hp_min = 0.01
         self.hp_max = 0.5
         self.hcr_min = 0.01
@@ -124,9 +124,9 @@ class SEIR():
         else:
             t = test_rate
 
-        I_0 = np.round(np.round(self.dataset[0][1] / (s * t)))
+        I_0 = np.round(self.dataset[0][1] / (s * t))
         H_0 = self.dataset[0][3]
-        E_0 = I_0
+        E_0 = np.round(self.dataset[1][1] * 2)
         D_0 = 0
         C_0 = 0
         S_0 = 1000000 - I_0 - H_0 - E_0
@@ -534,22 +534,19 @@ class SEIR():
                 n = np.around(uncumul[i] * pa)
                 k = self.dataset[i][1]
                 p = 1 / self.binom_smoother
-                if k < 0 and n < 0:
-                    k *= -1
-                    n *= -1
-                if k > n:
-                    tmp = n
-                    n = k
-                    k = tmp
-                if k < 0:
-                    n += - k + 1
-                    k = 1
                 n *= self.binom_smoother
-                prob = binom.pmf(k=k, n=n, p=p)
-                if prob > 0:
-                    p_k1 = np.log(binom.pmf(k=k, n=n, p=p))
+                if k > n:
+                    lgprb = np.log(binom.pmf(k=n, n=n, p=p))
+                    if lgprb == - math.inf:
+                        lgprb = self.overflow
+                    lgprb -= np.exp(k/(n*p))
+                    p_k1 = lgprb
                 else:
-                    p_k1 = self.overflow
+                    prob = binom.pmf(k=k, n=n, p=p)
+                    if prob > 0:
+                        p_k1 = np.log(binom.pmf(k=k, n=n, p=p))
+                    else:
+                        p_k1 = self.overflow
                 prb -= p_k1 * self.w_1
 
                 # ======================================= #
@@ -558,22 +555,19 @@ class SEIR():
                 n = np.around(pred[i][4])
                 k = self.dataset[i][3]
                 p = 1 / self.binom_smoother
-                if k < 0 and n < 0:
-                    k *= -1
-                    n *= -1
-                if k > n:
-                    tmp = n
-                    n = k
-                    k = tmp
-                if k < 0:
-                    n += - k + 1
-                    k = 1
                 n *= self.binom_smoother
-                prob = binom.pmf(k=k, n=n, p=p)
-                if prob > 0:
-                    p_k2 = np.log(binom.pmf(k=k, n=n, p=p))
+                if k > n:
+                    lgprb = np.log(binom.pmf(k=n, n=n, p=p))
+                    if lgprb == - math.inf:
+                        lgprb = self.overflow
+                    lgprb -= np.exp(k/(n*p))
+                    p_k2 = lgprb
                 else:
-                    p_k2 = self.overflow
+                    prob = binom.pmf(k=k, n=n, p=p)
+                    if prob > 0:
+                        p_k2 = np.log(binom.pmf(k=k, n=n, p=p))
+                    else:
+                        p_k2 = self.overflow
                 prb -= p_k2 * self.w_2
 
                 # ======================================= #
@@ -582,23 +576,19 @@ class SEIR():
                 n = np.around(pred[i][8])
                 k = self.dataset[i][4]
                 p = 1 / self.binom_smoother
-                if k < 0 and n < 0:
-                    k *= -1
-                    n *= -1
-                if k > n:
-                    tmp = n
-                    n = k
-                    k = tmp
-                if k < 0:
-                    n += - k + 1
-                    k = 1
                 n *= self.binom_smoother
-                prob = binom.pmf(k=k, n=n, p=p)
-                if prob > 0:
-                    p_k3 = np.log(binom.pmf(k=k, n=n, p=p))
+                if k > n:
+                    lgprb = np.log(binom.pmf(k=n, n=n, p=p))
+                    if lgprb == - math.inf:
+                        lgprb = self.overflow
+                    lgprb -= np.exp(k/(n*p))
+                    p_k3 = lgprb
                 else:
-                    p_k3 = self.overflow
-                prb -= p_k3 * self.w_3
+                    prob = binom.pmf(k=k, n=n, p=p)
+                    if prob > 0:
+                        p_k3 = np.log(binom.pmf(k=k, n=n, p=p))
+                    else:
+                        p_k3 = self.overflow
 
                 # ======================================= #
                 # Part 4: Fit on Critical
@@ -606,22 +596,19 @@ class SEIR():
                 n = np.around(pred[i][5])
                 k = self.dataset[i][5]
                 p = 1 / self.binom_smoother
-                if k < 0 and n < 0:
-                    k *= -1
-                    n *= -1
-                if k > n:
-                    tmp = n
-                    n = k
-                    k = tmp
-                if k < 0:
-                    n += - k + 1
-                    k = 1
                 n *= self.binom_smoother
-                prob = binom.pmf(k=k, n=n, p=p)
-                if prob > 0:
-                    p_k4 = np.log(binom.pmf(k=k, n=n, p=p))
+                if k > n:
+                    lgprb = np.log(binom.pmf(k=n, n=n, p=p))
+                    if lgprb == - math.inf:
+                        lgprb = self.overflow
+                    lgprb -= np.exp(k/(n*p))
+                    p_k4 = lgprb
                 else:
-                    p_k4 = self.overflow
+                    prob = binom.pmf(k=k, n=n, p=p)
+                    if prob > 0:
+                        p_k4 = np.log(binom.pmf(k=k, n=n, p=p))
+                    else:
+                        p_k4 = self.overflow
                 prb -= p_k4 * self.w_4
 
                 # ======================================= #
@@ -630,22 +617,19 @@ class SEIR():
                 n = np.around(pred[i][6])
                 k = self.dataset[i][6]
                 p = 1 / self.binom_smoother
-                if k < 0 and n < 0:
-                    k *= -1
-                    n *= -1
-                if k > n:
-                    tmp = n
-                    n = k
-                    k = tmp
-                if k < 0:
-                    n += - k + 1
-                    k = 1
                 n *= self.binom_smoother
-                prob = binom.pmf(k=k, n=n, p=p)
-                if prob > 0:
-                    p_k5 = np.log(binom.pmf(k=k, n=n, p=p))
+                if k > n:
+                    lgprb = np.log(binom.pmf(k=n, n=n, p=p))
+                    if lgprb == - math.inf:
+                        lgprb = self.overflow
+                    lgprb -= np.exp(k/(n*p))
+                    p_k5 = lgprb
                 else:
-                    p_k5 = self.overflow
+                    prob = binom.pmf(k=k, n=n, p=p)
+                    if prob > 0:
+                        p_k5 = np.log(binom.pmf(k=k, n=n, p=p))
+                    else:
+                        p_k5 = self.overflow
                 prb -= p_k5 * self.w_5
 
                 if print_details:
