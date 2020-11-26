@@ -232,7 +232,7 @@ class SEIR():
                             model.pc = 0
                             model.pd = 0
                             model.pcr = 0
-                            score = model.fit(method='method_2')
+                            score = model.fit(method='method_1')
                             iter += 1
                             print('iter{} / {}; score = {}'.format(iter, total_iter, score))
                             print(model.get_parameters())
@@ -266,7 +266,7 @@ class SEIR():
         iter = 1
 
         while True:
-            iter += 1
+
             model.beta = np.random.uniform(self.beta_min, self.beta_max)
             model.sigma = np.random.uniform(self.sigma_min, self.sigma_max)
             model.gamma = np.random.uniform(self.gamma_min, self.gamma_max)
@@ -285,7 +285,7 @@ class SEIR():
             str_array_tmp.append(str(model.s))
             str_array_tmp.append(str(model.t))
 
-            score = model.fit(method='method_2')
+            score = model.fit(method='method_1')
 
             str_array = [str(score)]
             for i in range(0, len(str_array_tmp)):
