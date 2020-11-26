@@ -17,9 +17,9 @@ class SEIR():
         # ========================================== #
         #           Model parameters
         # ========================================== #
-        self.beta = 0.3         # Contamination rate
-        self.sigma = 0.5        # Incubation rate
-        self.gamma = 0.15       # Recovery rate
+        self.beta = 0.4         # Contamination rate
+        self.sigma = 0.9        # Incubation rate
+        self.gamma = 0.1       # Recovery rate
         self.hp = 0.05          # Hospit rate
         self.hcr = 0.2          # Hospit recovery rate
         self.pc = 0.1           # Critical rate
@@ -56,23 +56,25 @@ class SEIR():
         self.w_6 = 1
 
         # Value to return if log(binom.pmf(k,n,p)) = - infinity
-        self.overflow = - 600
+        self.overflow = - 200
 
         # Smoothing data or not
-        self.smoothing = False
+        self.smoothing = True
 
         # Binomial smoother: ex: if = 2: predicted value *= 2 and p /= 2 WARNING: only use integer
-        self.binom_smoother = 4
+        self.binom_smoother_A = 2
+        self.binom_smoother_B = 4
+        self.binom_smoother_C = 4
 
         # Binomial smoother use for model scoring:
         self.b_s_score = 2
 
         # Optimizer step size
-        self.opti_step = 0.01
+        self.opti_step = 0.0001
 
         # Optimizer constraints
         self.beta_min = 0.1
-        self.beta_max = 0.6
+        self.beta_max = 0.8
         self.sigma_min = 1/5
         self.sigma_max = 1
         self.gamma_min = 1/10
@@ -98,7 +100,7 @@ class SEIR():
         # ========================================== #
         #        Printers
         # ========================================== #
-        self.fit_step_1_details = False
+        self.fit_step_1_details = True
 
 
     def get_parameters(self):
@@ -111,7 +113,7 @@ class SEIR():
         hprm = (self.w_1, self.w_2, self.w_3, self.w_4, self.w_5, self.w_6, self.binom_smoother, self.opti_step, self.optimizer, self.smoothing)
         return hprm
 
-    def get_initial_state(self, sensib=None, test_rate=None, sigma=None):
+    def get_initial_state(self, sensib=None, test_rate=None, sigma=None, t_0=0):
         """
         Generate an initial state for the model from the dataset
         according to the sensitivity and the testing rate to
@@ -133,14 +135,14 @@ class SEIR():
         else:
             sig = sigma
 
-        I_0 = np.round(self.dataset[0][1])
-        H_0 = self.dataset[0][3]
+        I_0 = np.round(self.dataset[t_0][1] / (s * t))
+        H_0 = self.dataset[t_0][3]
         E_0 = np.around((self.dataset[1][1] - self.dataset[0][1]) / sig)
         D_0 = 0
         C_0 = 0
         S_0 = 1000000 - I_0 - H_0 - E_0
         R_0 = 0
-        dE_to_I_0 = np.around(self.dataset[0][1] / (s * t))
+        dE_to_I_0 = np.around(self.dataset[0][1])
         dI_to_H_0 = H_0
         dI_to_R_0 = 0
         init = (S_0, E_0, I_0, R_0, H_0, C_0, D_0, dE_to_I_0, dI_to_H_0, dI_to_R_0)
@@ -197,74 +199,117 @@ class SEIR():
                          args=(tuple(prm)))
         return predict
 
-    def fit_and_select(self, part=1, optimizer='LBFGSB'):
+    def fit_and_select(self, part=1):
 
+        beta_range = np.linspace(0.1, 0.5, 5)
+        sigma_range = np.linspace(0.2, 1, 5)
+        gamma_range = np.linspace(0.1, 0.25, 5)
         s_range = np.linspace(0.7, 0.85, 10)
-        t_range = np.linspace(0.5, 1, 20)
-        idx = 0
-        total_idx = 100
-        if part == 1:
-            for s in range(0, len(s_range)):
-                for t in range(0, 10):
-                    params = (s_range[s], t_range[t])
-                    idx += 1
-                    print('=====================GENERAL ITER: {} / {}==================='.format(idx, total_idx))
-                    self.fit_and_select_obj(params, part, optimizer)
+        t_range = np.linspace(0.5, 1, 10)
 
-        if part == 2:
-            for s in range(0, len(s_range)):
-                for t in range(10, 20):
-                    params = (s_range[s], t_range[t])
-                    idx += 1
-                    print('=====================GENERAL ITER: {} / {}==================='.format(idx, total_idx))
-                    self.fit_and_select_obj(params, part, optimizer)
+        # Creation du modèle:
+        model = SEIR()
+        model.smoothing = True
+        model.import_dataset()
+        model.fit_step_1_details=False
 
+        iter = 0
+        total_iter = 5 * 5 * 10 * 10
 
+        for s in range(0, len(sigma_range)):
+            for sig in range(0, len(sigma_range)):
+                for g in range(0, len(gamma_range)):
+                    for s in range(0, len(s_range)):
+                        for t in range(0, len(t_range)):
+                            # Init parameters:
+                            model.beta = beta_range[part]
+                            model.sigma = sigma_range[sig]
+                            model.gamma = gamma_range[g]
+                            model.hp = self.hp
+                            model.s = s_range[s]
+                            model.t = t_range[t]
+                            model.hcr = 0
+                            model.pc = 0
+                            model.pd = 0
+                            model.pcr = 0
+                            score = model.fit(method='method_2')
+                            iter += 1
+                            print('iter{} / {}; score = {}'.format(iter, total_iter, score))
+                            print(model.get_parameters())
+                            file = open('mod_select_part_{}.csv'.format(part), 'a')
+                            str_array = []
+                            str_array.append(str(score))
+                            str_array.append(str(beta_range[part]))
+                            str_array.append(str(sigma_range[sig]))
+                            str_array.append(str(gamma_range[g]))
+                            str_array.append(str(s_range[s]))
+                            str_array.append(str(t_range[t]))
+                            best_param = model.get_parameters()
+                            for item in best_param:
+                                str_array.append(str(item))
 
-    def fit_and_select_obj(self, parameters, part, optimizer):
+                            string = ';'.join(str_array)
+                            file.write(string)
+                            file.write('\n')
+                            file.close()
 
-        binom_smoother_range = [2, 3, 4, 5]
-        idx = 0
+    def fit_and_select_random(self, seed=1, id='1'):
 
-        for bs in binom_smoother_range:
-            idx += 1
-            print('sub-iter: {} / {}'.format(idx, len(binom_smoother_range)))
-            print('PART {} - Tested sensitivity: {}, tested testing rate: {} with binom smoother {} and optimizer {}'.format(part, parameters[0], parameters[1], bs, optimizer))
-            model = SEIR()
-            model.smoothing = False
-            model.binom_smoother = bs
-            model.import_dataset()
-            model.optimizer = optimizer
+        # Creation du modèle:
+        model = SEIR()
+        model.smoothing = True
+        model.import_dataset()
+        model.fit_step_1_details = False
 
-            model.s = parameters[0]
-            model.t = parameters[1]
+        np.random.seed(seed)
 
-            error = model.fit(display=False, method='method_2')
-            print('Model rapport: ')
-            parameters = model.get_parameters()
-            print(parameters)
-            print('error of the model: {}'.format(error))
+        iter = 1
 
-            file = open('fit_result_part{}_opti_{}.csv'.format(part, optimizer), 'a')
-            text = []
-            text.append(str(float(error)))
-            for item in parameters:
-                text.append(str(item))
-            text.append(str(model.binom_smoother))
-            text.append(str(model.smoothing))
-            text.append(str(model.optimizer))
-            text.append(str(model.opti_step))
+        while True:
+            iter += 1
+            model.beta = np.random.uniform(self.beta_min, self.beta_max)
+            model.sigma = np.random.uniform(self.sigma_min, self.sigma_max)
+            model.gamma = np.random.uniform(self.gamma_min, self.gamma_max)
+            model.hp = np.random.uniform(self.hp_min, self.hp_max)
+            model.s = np.random.uniform(self.s_min, self.s_max)
+            model.t = np.random.uniform(self.t_min, self.t_max)
+            model.hcr = 0
+            model.pc = 0
+            model.pd = 0
+            model.pcr = 0
 
-            final_str = ';'.join(text)
-            file.write(final_str)
+            str_array_tmp = []
+            str_array_tmp.append(str(model.beta))
+            str_array_tmp.append(str(model.sigma))
+            str_array_tmp.append(str(model.gamma))
+            str_array_tmp.append(str(model.s))
+            str_array_tmp.append(str(model.t))
+
+            score = model.fit(method='method_2')
+
+            str_array = [str(score)]
+            for i in range(0, len(str_array_tmp)):
+                str_array.append(str_array_tmp[i])
+
+            iter += 1
+            print('iter{} ; score = {}'.format(iter, score))
+            print(model.get_parameters())
+            file = open('mod_select_id_{}.csv'.format(id), 'a')
+            str_array = []
+            str_array.append(str(score))
+            str_array.append(str(model.beta))
+            str_array.append(str(model.sigma))
+            str_array.append(str(model.gamma))
+            str_array.append(str(model.s))
+            str_array.append(str(model.t))
+            best_param = model.get_parameters()
+            for item in best_param:
+                str_array.append(str(item))
+
+            string = ';'.join(str_array)
+            file.write(string)
             file.write('\n')
-
             file.close()
-
-
-
-
-
 
 
 
@@ -312,21 +357,21 @@ class SEIR():
             if self.optimizer == 'LBFGSB':
                 res = minimize(self.objective, np.asarray(init_prm),
                                method='L-BFGS-B',
-                               options={'eps': self.opti_step},
+                               #options={'eps': self.opti_step},
                                constraints=cons,
                                bounds=bds,
-                               args=('step_1', False, display))
+                               args=('MSE_selector', False, display))
             else:
                 if self.optimizer == 'COBYLA':
                     res = minimize(self.objective, np.asarray(init_prm),
                                    method='COBYLA',
-                                   args=('step_1', False, display),
+                                   args=('MSE_selector', False, display),
                                    constraints=cons)
                 else:  # Auto
                     res = minimize(self.objective, np.asarray(init_prm),
                                    constraints=cons,
                                    options={'eps': self.opti_step},
-                                   args=('step_1', False, display))
+                                   args=('MSE_selector', False, display))
 
             if display:
                 # Print optimizer result
@@ -378,18 +423,18 @@ class SEIR():
                                options={'eps': self.opti_step},
                                constraints=cons,
                                bounds=bds,
-                               args=('step_1', False, display))
+                               args=('MSE_selector', False, display))
             else:
                 if self.optimizer == 'COBYLA':
                     res = minimize(self.objective, np.asarray(init_prm),
                                    method='COBYLA',
-                                   args=('step_1', False, display),
+                                   args=('MSE_selector', False, display),
                                    constraints=cons)
                 else:  # Auto
                     res = minimize(self.objective, np.asarray(init_prm),
                                    constraints=cons,
                                    options={'eps': self.opti_step},
-                                   args=('step_1', False, display))
+                                   args=('MSE_selector', False, display))
 
             if display:
                 # Print optimizer result
@@ -402,19 +447,6 @@ class SEIR():
             self.hp = res.x[3]
 
         return res.fun
-
-
-    def fit_rate_objectif(self, parameters):
-
-        model = SEIR()
-        model.set_param()
-        model.s = 1
-        model.t = parameters[0]
-        model.import_dataset()
-        model.fit()
-        score = model.score(output='sum_tot')
-        print('score for t= {}: {} '.format(parameters[0], - score))
-        return - score
 
 
 
@@ -452,21 +484,18 @@ class SEIR():
                 # PART 1: Fit testing rate by comparing
                 # Test predictions and the number of test
                 # ======================================= #
-                n = np.around(uncumul[i] * self.binom_smoother)
+                n = np.around(uncumul[i] * self.binom_smoother_A)
                 k = np.around(self.dataset[i][2])
-                p = params[-1] / self.binom_smoother
+                p = params[-1] / self.binom_smoother_A
                 if n < 0:
-                    p_k1 = np.log(binom.pmf(k=n, n=n, p=p))
-                    if p_k1 == - math.inf:
-                        p_k1 = self.overflow
-                    p_k1 -= np.exp(k / (n*p))
+                    p_k1 = self.overflow
                 else:
                     if k > n:
-                        p_k1 = self.overflow - np.fabs(n-k) ** 2
+                        p_k1 = self.overflow
                     else:
                         p_k1 = np.log(binom.pmf(k=k, n=n, p=p))
                         if p_k1 == - math.inf:
-                            p_k1 = self.overflow - np.fabs(n-k)
+                            p_k1 = self.overflow
                 #print('pred={}, n={}, n*p= {} k={}, p={}, p_k1={}'.format(uncumul[i], n, n*p, k, p, p_k1))
                 prb -= p_k1 * self.w_1
 
@@ -475,42 +504,35 @@ class SEIR():
                 # ======================================= #
                 # PART 2: fit on positive tests
                 # ======================================= #
-                p = params[-2] * params[-1]/ self.binom_smoother
-                n = np.around(uncumul[i] * self.binom_smoother)
+                p = params[-2] / self.binom_smoother_B
+                n = np.around(uncumul[i] * params[-1] * self.binom_smoother_B)
                 k = np.around(self.dataset[i][1])
                 if n < 0:
-                    p_k2 = self.overflow - np.fabs(n-k) ** 2
+                    p_k2 = self.overflow
                 else:
                     if k > n:
-                        p_k2 = np.log(binom.pmf(k=n, n=n, p=p))
-                        if p_k2 == - math.inf:
-                            p_k2 = self.overflow
-                        p_k2 -= np.exp(k / (n * p))
+                        p_k2 = self.overflow
                     else:
                         p_k2 = np.log(binom.pmf(k=k, n=n, p=p))
                         if p_k2 == - math.inf:
-                            p_k2 = self.overflow - np.fabs(n-k)
-
+                            p_k2 = self.overflow
                 prb -= p_k2 * self.w_2
 
                 # ======================================= #
                 # PART 3: fit on I to H
                 # ======================================= #
-                n = np.around(pred[i][8] * self.binom_smoother)
+                n = np.around(pred[i][8] * self.binom_smoother_C)
                 k = np.around(self.dataset[i][4])
-                p = 1 / self.binom_smoother
+                p = 1 / self.binom_smoother_C
                 if n < 0:
-                    p_k3 = self.overflow - np.fabs(n-k) ** 2
+                    p_k3 = self.overflow
                 else:
                     if k > n:
-                        p_k3 = np.log(binom.pmf(k=n, n=n, p=p))
-                        if p_k3 == - math.inf:
-                            p_k3 = self.overflow
-                        p_k3 -= np.exp(k / (n * p))
+                        p_k3 = self.overflow
                     else:
                         p_k3 = np.log(binom.pmf(k=k, n=n, p=p))
                         if p_k3 == - math.inf:
-                            p_k3 = self.overflow - np.fabs(n-k)
+                            p_k3 = self.overflow
 
                 prb -= p_k3 * self.w_3
 
@@ -524,6 +546,62 @@ class SEIR():
             #print('loss: {}'.format(prb))
 
             return prb
+
+        if method == 'MSE_selector':
+            # Time vector
+            time = np.arange(7, 33)
+            # Get full parameters:
+            if len(parameters) == 6:
+                params = (parameters[0], parameters[1], parameters[2], parameters[3], 0, 0, 0, 0, parameters[4], parameters[5])
+            else:
+                params = (parameters[0], parameters[1], parameters[2], parameters[3], 0, 0, 0, 0, self.s, self.t)
+            # Get initial state:
+            init_state = self.get_initial_state(sensib=params[-2], test_rate=params[-1], sigma=params[1])
+            # Make predictions:
+            pred = self.predict(duration=self.dataset.shape[0],
+                                parameters=params,
+                                initial_state=init_state)
+            # Un-cumul tests predictions:
+            uncumul = []
+            uncumul.append(pred[0][7])
+            for i in range(1, pred.shape[0]):
+                uncumul.append(pred[i][7] - pred[i-1][7])
+            if display:
+                print(params)
+
+            SSE = []
+            for t in time:
+
+                # ======================================= #
+                # PART 1: Fit testing rate by comparing
+                # Test predictions and the number of test
+                # ======================================= #
+                predict = uncumul[t] * params[-1]
+                observ = self.dataset[t][2]
+                sse_1 = (observ - predict) ** 2
+                SSE.append(sse_1)
+
+                # ======================================= #
+                # PART 2: fit on positive tests
+                # ======================================= #
+                observ = self.dataset[t][1]
+                predict = uncumul[t] * params[-1] * params[-2]
+                sse_2 = (observ - predict) ** 2
+                SSE.append(sse_2)
+
+                # ======================================= #
+                # PART 3: fit on I to H
+                # ======================================= #
+                observ = self.dataset[t][4]
+                predict = pred[t][8]
+                sse_3 = (observ - predict) ** 2
+                SSE.append(sse_3)
+
+            result = np.sum(SSE)
+            if display:
+                print('SSE: {}'.format(result))
+            return result
+
 
 
 
@@ -673,29 +751,31 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='blabla')
 
     parser.add_argument('--part', default='0')
-    parser.add_argument('--opti', default='LBFGSB')
+    parser.add_argument('--seed', default='0')
+    parser.add_argument('--id', default='1')
 
     args = parser.parse_args()
+    mdl = SEIR()
+    mdl.import_dataset()
+    if args.seed != '0':
+        mdl.fit_and_select_random(id = args.id, seed=int(args.seed))
 
 
     if args.part == '1':
-        if args.opti == 'LBFGSB':
-            mdl = SEIR()
-            mdl.fit_and_select(part=1, optimizer='LBFGSB')
-        if args.opti == 'COBYLA':
-            mdl = SEIR()
-            mdl.fit_and_select(part=1, optimizer='COBYLA')
+        mdl.fit_and_select(part=1)
     if args.part == '2':
-        if args.opti == 'LBFGSB':
-            mdl = SEIR()
-            mdl.fit_and_select(part=2, optimizer='LBFGSB')
-        if args.opti == 'COBYLA':
-            mdl = SEIR()
-            mdl.fit_and_select(part=2, optimizer='COBYLA')
+        mdl.fit_and_select(part=2)
+    if args.part == '3':
+        mdl.fit_and_select(part=3)
+    if args.part == '4':
+        mdl.fit_and_select(part=4)
+    if args.part == '5':
+        mdl.fit_and_select(part=0)
+
 
     #first()
 
-    validation_result_analysis()
+    #validation_result_analysis()
 
 
 

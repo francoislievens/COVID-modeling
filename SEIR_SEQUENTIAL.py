@@ -319,7 +319,7 @@ class SEIR():
 
 
 
-    def objective(self, parameters, method, print_details=False, display=False):
+    def objective(self, parameters, method, print_details=True, display=False):
 
         if method == 'step_1':
 
